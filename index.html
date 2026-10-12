@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProductPilot AI – App Demo</title>
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem('productpilot_theme'))||'dark'}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#0A0E17;--sidebar:#0F1420;--surface:#151B2B;--surface-2:#1C2438;--border:#2A3347;--primary:#6C5CE7;--primary-hover:#7F71F0;--accent:#00D2FF;--success:#00E676;--warning:#FFB800;--danger:#FF5252;--text:#E8ECF4;--text-muted:#8B95A8;--at:#A29BFE;--radius:12px}
+[data-theme=light]{--bg:#F3F5FA;--sidebar:#fff;--surface:#fff;--surface-2:#EDF0F7;--border:#DCE1EC;--text:#1A2033;--text-muted:#5C677D;--at:#5A4BD6;--success:#00A055;--warning:#C98500;--danger:#DC3B3B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;display:flex}
+.sidebar{width:240px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:transform .25s}
+.sidebar-logo{padding:1.4rem 1.3rem;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid var(--border)}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center}
+.sidebar-logo span{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem}
+.sidebar-logo em{font-style:normal;background:linear-gradient(135deg,#A29BFE,var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.nav-section{padding:1rem .8rem;flex:1;overflow-y:auto}
+.nav-label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:0 .6rem;margin:1rem 0 .4rem}
+.nav-label:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:.7rem;padding:.65rem .8rem;border-radius:10px;color:var(--text-muted);font-size:.92rem;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:rgba(108,92,231,.15);color:var(--at)}
+.nav-item .icon{width:22px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--primary);color:#fff;font-size:.68rem;padding:.1rem .5rem;border-radius:99px}
+.sidebar-footer{padding:1rem;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:.7rem;padding:.6rem;border-radius:10px;background:var(--surface-2)}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff}
+.user-info{font-size:.85rem}.user-info .name{font-weight:600}.user-info .plan{color:var(--text-muted);font-size:.75rem}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.4rem;background:var(--sidebar);flex-shrink:0;gap:.6rem}
+.topbar-left{display:flex;align-items:center;gap:.7rem;min-width:0}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-actions{display:flex;gap:.5rem}
+.menu-btn{display:none;width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:1.2rem;cursor:pointer;align-items:center;justify-content:center}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55;display:none}.overlay.show{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:9px;font-weight:600;font-size:.88rem;border:none;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-danger{background:rgba(255,82,82,.12);color:var(--danger);border:1px solid rgba(255,82,82,.35)}.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-sm{padding:.35rem .7rem;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.content{flex:1;overflow-y:auto;padding:1.8rem}
+.screen{display:none;animation:fadeIn .35s ease}.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1.pg{font-family:'Space Grotesk',sans-serif;font-size:1.5rem}
+.sub{color:var(--text-muted);font-size:.9rem;margin:.25rem 0 1.4rem}
+.research-form{max-width:680px;margin:0 auto}
+.form-header{text-align:center;margin-bottom:2rem}.form-header h1{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;margin-bottom:.5rem}.form-header p{color:var(--text-muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.6rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.field{margin-bottom:1.2rem}
+.field label{display:block;font-size:.85rem;font-weight:600;color:var(--text-muted);margin-bottom:.4rem}
+.req{color:var(--danger)}
+.field input,.field select,.field textarea{width:100%;padding:.8rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.field select:disabled{opacity:.6}
+.field.bad input,.field.bad select{border-color:var(--danger)}
+.err{color:var(--danger);font-size:.8rem;margin-top:.35rem;display:none}.field.bad .err{display:block}
+.field textarea{resize:vertical;min-height:80px}
+.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
+.chip{padding:.35rem .85rem;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:.8rem;cursor:pointer;color:var(--text-muted);transition:all .15s}
+.chip:hover,.chip.selected{border-color:var(--primary);color:var(--at);background:rgba(108,92,231,.12)}
+.form-actions{display:flex;gap:.8rem;margin-top:1.4rem}.form-actions .btn{flex:1;padding:.9rem}
+.analyzing-wrap{max-width:540px;margin:3rem auto;text-align:center}
+.analyzing-wrap h2{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;margin:.3rem 0 .4rem}.analyzing-wrap>p{color:var(--text-muted);margin-bottom:1.4rem}
+.pbar{height:12px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px;transition:width .08s linear}
+.ppct{font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:700;margin:.8rem 0 .2rem}
+.ptask{color:var(--at);font-weight:600;min-height:1.5rem;margin-bottom:1.4rem}
+.progress-steps{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.4rem}
+.progress-step{display:flex;align-items:center;gap:.9rem;padding:.55rem 0;color:var(--text-muted);font-size:.92rem}
+.progress-step .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.progress-step.done{color:var(--success)}.progress-step.done .dot{background:var(--success);border-color:var(--success);color:#000}
+.progress-step.active{color:var(--text)}.progress-step.active .dot{border-color:var(--primary);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,92,231,.4)}50%{box-shadow:0 0 0 6px rgba(108,92,231,0)}}
+.results-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.results-header .meta{color:var(--text-muted);font-size:.9rem;margin-top:.25rem}
+.hdr-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.demo-note{background:rgba(0,210,255,.08);border:1px solid rgba(0,210,255,.3);border-radius:10px;padding:.7rem 1rem;font-size:.85rem;margin-bottom:1.2rem}
+.tabs{display:flex;gap:.3rem;overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:1.3rem}
+.tab{padding:.6rem 1rem;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;white-space:nowrap;font-weight:600;font-size:.88rem}
+.tab:hover{color:var(--text)}.tab.active{color:var(--at);border-color:var(--primary)}
+.pane{display:none}.pane.active{display:block}
+.problem-banner{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.25);border-radius:14px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;display:flex;gap:1rem}
+.problem-banner h3{font-size:.95rem;color:var(--danger);margin-bottom:.3rem}.problem-banner p{font-size:.95rem;line-height:1.5}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem}
+.product-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.3rem;transition:border-color .2s,transform .2s,box-shadow .2s;cursor:pointer;display:flex;flex-direction:column;gap:.8rem}
+.product-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.product-card.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.pc-top{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start}.pc-top h3{font-size:1.02rem;font-weight:600}
+.pc-chk{display:flex;gap:.5rem;align-items:center;font-size:.78rem;color:var(--text-muted)}.pc-chk input{accent-color:var(--primary);width:16px;height:16px}
+.badge{font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.badge-high{background:rgba(0,230,118,.15);color:var(--success)}.badge-med{background:rgba(255,184,0,.15);color:var(--warning)}
+.pc-why{color:var(--text-muted);font-size:.87rem;line-height:1.45}
+.scores{display:grid;gap:.6rem}
+.sc-h{display:flex;justify-content:space-between;font-size:.76rem;color:var(--text-muted);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.04em}.sc-h b{color:var(--text)}
+.bar{height:8px;background:var(--surface-2);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;border-radius:9px;transition:width .8s}
+.seg{display:flex;gap:3px}.seg i{flex:1;height:8px;border-radius:4px;background:var(--surface-2)}
+.seg i.on.c1,.c1 b{background:var(--success)}.seg i.on.c2{background:var(--warning)}.seg i.on.c3{background:var(--danger)}
+.pc-foot{display:flex;justify-content:space-between;align-items:center;padding-top:.8rem;border-top:1px solid var(--border);font-size:.85rem;gap:.5rem}
+.price{font-weight:700}
+.cmp-bar{position:sticky;bottom:0;margin-top:1rem;background:var(--surface);border:1px solid var(--primary);border-radius:12px;padding:.8rem 1rem;display:none;gap:.7rem;align-items:center;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.2);z-index:5}.cmp-bar.show{display:flex}
+.detail-panel{display:none;margin-top:1.6rem;background:var(--surface);border:1px solid var(--primary);border-radius:16px;padding:1.5rem}.detail-panel.show{display:block;animation:fadeIn .3s}
+.detail-panel h2{font-family:'Space Grotesk',sans-serif;font-size:1.25rem}
+.dp-head{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:center}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.detail-block{background:var(--bg);border-radius:12px;padding:1.1rem}.detail-block h4{font-size:.82rem;color:var(--text-muted);margin-bottom:.55rem}
+.detail-block p{font-size:.9rem;line-height:1.55}
+.detail-block ul{list-style:none;font-size:.88rem}.detail-block li{padding:.3rem 0;display:flex;gap:.5rem;line-height:1.4}.detail-block li:before{content:"•";color:var(--primary);font-weight:700}
+.list{display:flex;flex-direction:column;gap:.8rem;max-width:760px}
+.row-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;transition:border-color .2s}
+.row-item:hover{border-color:var(--primary)}.row-item .t{font-weight:600}.row-item .d{color:var(--text-muted);font-size:.84rem;margin-top:.15rem}
+.row-btns{display:flex;gap:.4rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem}.stat .l{font-size:.8rem;color:var(--text-muted)}.stat .v{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;margin-top:.2rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem}.mini h4{margin-bottom:.5rem}
+.mini dl{display:grid;grid-template-columns:auto 1fr;gap:.3rem .8rem;font-size:.86rem}.mini dt{color:var(--text-muted)}
+.bars{display:flex;align-items:flex-end;gap:5px;height:130px;margin:.8rem 0}
+.bars div{flex:1;background:linear-gradient(var(--accent),var(--primary));border-radius:4px 4px 0 0;cursor:pointer;opacity:.75;position:relative}.bars div:hover,.bars div.sel{opacity:1}
+.bars-l{display:flex;gap:5px;font-size:.65rem;color:var(--text-muted)}.bars-l span{flex:1;text-align:center}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:520px}
+th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}th{color:var(--text-muted);font-size:.78rem;text-transform:uppercase}
+td:first-child,th:first-child{position:sticky;left:0;background:var(--surface);font-weight:600}
+.empty-state{text-align:center;padding:3.5rem 1rem;color:var(--text-muted)}.empty-state .big-icon{font-size:3rem;margin-bottom:1rem;opacity:.6}
+.toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.toolbar select{padding:.5rem .8rem;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:9px;font-family:inherit}
+input[type=range]{width:100%;accent-color:var(--primary)}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap}.set-row:last-child{border:0}.set-row p{color:var(--text-muted);font-size:.84rem}
+.sk{background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:sh 1.3s infinite;border-radius:8px}
+@keyframes sh{to{background-position:-200% 0}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}.modal.show{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;max-width:900px;width:100%;max-height:90vh;overflow-y:auto;animation:fadeIn .25s}
+.modal-box p{color:var(--text-muted);margin:.4rem 0 1.2rem}.modal-box .row{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--success);color:var(--text);padding:.8rem 1.2rem;border-radius:12px;font-size:.9rem;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transform:translateY(20px);transition:all .3s;z-index:200;pointer-events:none;max-width:calc(100vw - 48px)}
+.toast.show{opacity:1;transform:none}.toast.bad{border-color:var(--danger)}
+@media(max-width:900px){
+.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:60;transform:translateX(-100%)}.sidebar.open{transform:none}
+.menu-btn{display:flex}.content{padding:1.1rem}.detail-grid,.grid3{grid-template-columns:1fr}
+}
+@media(max-width:480px){.topbar{padding:0 .8rem}.btn-hide{display:none}.form-actions,.hdr-btns{flex-direction:column;width:100%}.hdr-btns .btn,.form-actions .btn{width:100%}.products-grid,.cards{grid-template-columns:1fr}.row-btns{width:100%}.row-btns .btn{flex:1}.card{padding:1.1rem}.form-header h1{font-size:1.45rem}}
+.auth{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:1rem;overflow-y:auto}.auth.show{display:flex}
+.auth-box{width:100%;max-width:400px}.auth-box .sidebar-logo{justify-content:center;border:0;padding:0 0 1.2rem}
+.auth-tabs{display:flex;gap:.3rem;margin-bottom:1.3rem;background:var(--surface-2);padding:4px;border-radius:10px}
+.auth-tabs button{flex:1;padding:.55rem;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font-weight:600;font-size:.88rem;font-family:inherit;cursor:pointer}.auth-tabs button.on{background:var(--primary);color:#fff}
+.auth-err{display:none;color:var(--danger);font-size:.85rem;margin:-.4rem 0 .9rem}
+.auth-link{display:block;width:100%;background:none;border:0;color:var(--at);font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;margin-top:.9rem}
+.auth-note{color:var(--text-muted);font-size:.78rem;text-align:center;margin-top:1rem}
+
+/* Interactive dashboard analytics */
+.analytics-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(250px,1fr);gap:1rem;margin:1.1rem 0 1.6rem}
+.chart-card{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem}
+.chart-card h3{font-size:.98rem;margin-bottom:.35rem}.chart-card .chart-desc{font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.45}
+.chart-wrap{height:250px;position:relative}.chart-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--text-muted);font-size:.86rem;border:1px dashed var(--border);border-radius:10px}
+.chart-toolbar{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap}.chart-toolbar select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:.4rem .55rem;font:inherit;font-size:.78rem}
+@media(max-width:850px){.analytics-grid{grid-template-columns:1fr}.chart-wrap{height:230px}}
+
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🚀</div><span>Product<em>Pilot</em></span></div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <div class="nav-item" data-screen="dashboard" onclick="goTo('dashboard')"><span class="icon">🏠</span>Dashboard</div>
+    <div class="nav-item" data-screen="new" onclick="goTo('new')"><span class="icon">🔍</span>New Research</div>
+    <div class="nav-item" data-screen="history" onclick="goTo('history')"><span class="icon">📋</span>History</div>
+    <div class="nav-item" data-screen="saved" onclick="goTo('saved')"><span class="icon">⭐</span>Saved Products<span class="nav-badge" id="savedBadge" style="display:none"></span></div>
+    <div class="nav-item" data-screen="results" id="navResults" style="display:none" onclick="openLast()"><span class="icon">📊</span>Last Report</div>
+    <div class="nav-label">Insights</div>
+    <div class="nav-item" data-screen="trends" onclick="goTo('trends')"><span class="icon">📈</span>Market Trends</div>
+    <div class="nav-item" data-screen="competitors" onclick="goTo('competitors')"><span class="icon">🏪</span>Competitors</div>
+    <div class="nav-label">Account</div>
+    <div class="nav-item" data-screen="settings" onclick="goTo('settings')"><span class="icon">⚙️</span>Settings</div>
+  </div>
+  <div class="sidebar-footer"><div class="user-chip"><div class="user-avatar" id="uAvatar">DS</div><div class="user-info" style="flex:1;min-width:0"><div class="name" id="uName">Demo Seller</div><div class="plan" id="uPlan">Pro Plan</div></div><button class="btn btn-ghost btn-sm" title="Logout" onclick="logout()">⏻</button></div></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left"><button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button><div class="topbar-title" id="topTitle">Dashboard</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()">☀️ Light</button>
+      <button class="btn btn-ghost btn-hide" onclick="confirmReset()">Reset Demo</button>
+    </div>
+  </div>
+  <div class="content" id="content">
+
+    <div class="screen" id="screen-dashboard"></div>
+
+    <div class="screen" id="screen-new">
+      <div class="research-form">
+        <div class="form-header"><h1>What should we research?</h1><p>Pick a market and niche. We’ll surface problems and product opportunities for that location.</p></div>
+        <div class="card" id="formCard">
+          <div class="grid3">
+            <div class="field" id="f-country"><label>Country <span class="req">*</span></label><select id="country" onchange="onCountry()"></select><div class="err" id="e-country"></div></div>
+            <div class="field" id="f-state"><label>State / Province <span class="req" id="stateStar">*</span></label><select id="state" onchange="onState()"></select><div class="err" id="e-state"></div></div>
+            <div class="field" id="f-city"><label>City (optional)</label><select id="city"></select></div>
+          </div>
+          <div class="field" id="f-niche"><label>Niche / Product Category <span class="req">*</span></label>
+            <input type="text" id="niche" placeholder="e.g. Pet products, Smart farming, College students" oninput="clearErr('niche')">
+            <div class="err" id="e-niche"></div>
+            <div class="chip-row">
+              <span class="chip" onclick="setNiche(this,'Pet products for dog owners')">🐾 Pets</span><span class="chip" onclick="setNiche(this,'Home fitness equipment')">🏋️ Fitness</span><span class="chip" onclick="setNiche(this,'Kitchen gadgets for small apartments')">🍳 Kitchen</span><span class="chip" onclick="setNiche(this,'Smart Farming')">🌾 Smart Farming</span><span class="chip" onclick="setNiche(this,'College Students')">🎓 Students</span>
+            </div>
+          </div>
+          <div class="field" id="f-customer"><label>Target Customer <span class="req">*</span></label><input type="text" id="customer" placeholder="e.g. Busy professionals, New parents, Students" oninput="clearErr('customer')"><div class="err" id="e-customer"></div></div>
+          <div class="field"><label>Focus Market (optional)</label><select id="focus"><option value="">Not specified</option><option>Local / city market</option><option>National market</option><option>Online marketplaces</option><option>Cross-border export</option></select></div>
+          <div class="field"><label>Extra notes (optional)</label><textarea id="notes" placeholder="Budget, shipping preference, constraints…"></textarea></div>
+          <div class="form-actions"><button class="btn btn-primary" onclick="startAnalysis()">🔍 Analyze Market</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-analyzing">
+      <div class="analyzing-wrap">
+        <h2>Market Research Analysis</h2><p id="analyzingNiche"></p>
+        <div class="pbar"><i id="pbar"></i></div>
+        <div class="ppct" id="ppct">0%</div><div class="ptask" id="ptask">Starting…</div>
+        <div class="progress-steps" id="psteps"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-results">
+      <div id="resSkel" style="display:none"><div class="sk" style="height:30px;width:40%;margin-bottom:1rem"></div><div class="sk" style="height:60px;margin-bottom:1.2rem"></div><div class="products-grid" id="skCards"></div></div>
+      <div id="resBody">
+        <div class="results-header">
+          <div><h1 class="pg" id="resultsTitle">Research Report</h1><div class="meta" id="resultsMeta"></div></div>
+          <div class="hdr-btns"><button class="btn btn-ghost" onclick="goTo('new')">← New Research</button><button class="btn btn-primary" onclick="exportPDF()">⬇ Export PDF</button><button class="btn btn-ghost" onclick="shareReport()">🔗 Share link</button><button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button></div>
+        </div>
+        <div class="demo-note" id="demoNote"></div>
+        <div class="tabs" id="tabs"></div>
+        <div class="pane active" id="pane-opp">
+          <div class="problem-banner"><div>⚠️</div><div><h3>Top Customer Problem Detected</h3><p id="problemText"></p></div></div>
+          <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text-muted)">Suggested Products</h3>
+          <div class="products-grid" id="productsGrid"></div>
+          <div class="cmp-bar" id="cmpBar"><b id="cmpCount"></b><span style="color:var(--text-muted);font-size:.82rem">(max 4)</span><span style="flex:1"></span><button class="btn btn-ghost btn-sm" onclick="clearSelection()">Clear</button><button class="btn btn-primary btn-sm" onclick="compareProducts()">Compare Selected</button></div>
+          <div class="detail-panel" id="detailPanel"></div>
+        </div>
+        <div class="pane" id="pane-trends"></div><div class="pane" id="pane-problems"></div><div class="pane" id="pane-competitors"></div><div class="pane" id="pane-pricing"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-history"></div>
+    <div class="screen" id="screen-saved"></div>
+    <div class="screen" id="screen-trends"></div>
+    <div class="screen" id="screen-competitors"></div>
+    <div class="screen" id="screen-settings"></div>
+  </div>
+</div>
+
+<div class="auth" id="auth"><div class="auth-box" onkeydown="if(event.key==='Enter')submitAuth()">
+<div class="sidebar-logo"><div class="logo-icon">🚀</div><span>Product<em>Pilot</em> AI</span></div>
+<div class="card"><div class="auth-tabs" id="authTabs"><button id="tabLogin" onclick="showAuth('login')">Login</button><button id="tabSignup" onclick="showAuth('signup')">Sign up</button></div>
+<div class="field" id="fName"><label>Full name</label><input id="aName" autocomplete="name"></div>
+<div class="field"><label>Email</label><input id="aEmail" type="email" autocomplete="email"></div>
+<div class="field" id="fCode"><label>Reset code</label><input id="aCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>
+<div class="field" id="fPassW"><label>Password</label><input id="aPass" type="password"></div>
+<div class="field" id="fPass2"><label>Confirm password</label><input id="aPass2" type="password" autocomplete="new-password"></div>
+<div class="demo-note" id="aInfo" style="display:none"></div>
+<div class="auth-err" id="aErr"></div>
+<button class="btn btn-primary" id="aBtn" style="width:100%;padding:.8rem" onclick="submitAuth()">Login</button><button class="auth-link" id="aForgot" onclick="showAuth('forgot')">Forgot password?</button><button class="auth-link" id="aBack" style="display:none" onclick="showAuth('login')">Back to login</button></div>
+<p class="auth-note">Demo login: accounts aur research sirf is browser me save hote hain.</p></div></div>
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
+
+<script>
+/* =====================================================================
+   PRODUCTION ARCHITECTURE (read me)
+   Frontend → Flask backend → Gemini API → Frontend
+   The Gemini API key is stored only as a server-side environment variable. Never paste it into this HTML file.
+   ===================================================================== */
+
+// ========== LOCATION DATASET (Country → State → City) ==========
+const LOCATIONS={
+ India:{"Uttar Pradesh":["Kanpur","Lucknow","Noida","Agra","Varanasi"],"Maharashtra":["Mumbai","Pune","Nagpur"],"Karnataka":["Bengaluru","Mysuru","Mangaluru"],"Delhi":["New Delhi","Dwarka"],"Gujarat":["Ahmedabad","Surat","Vadodara"],"Rajasthan":["Jaipur","Udaipur","Jodhpur"],"Tamil Nadu":["Chennai","Coimbatore","Madurai"]},
+ USA:{"California":["Los Angeles","San Francisco","San Diego"],"Texas":["Houston","Dallas","Austin"],"Florida":["Miami","Orlando","Tampa"],"New York":["New York City","Buffalo"]},
+ Canada:{"Ontario":["Toronto","Ottawa"],"Quebec":["Montreal","Quebec City"],"British Columbia":["Vancouver","Victoria"],"Alberta":["Calgary","Edmonton"]},
+ Australia:{"New South Wales":["Sydney","Newcastle"],"Victoria":["Melbourne","Geelong"],"Queensland":["Brisbane","Gold Coast"]},
+ "United Kingdom":{"England":["London","Manchester","Birmingham"],"Scotland":["Edinburgh","Glasgow"],"Wales":["Cardiff"]},
+ Germany:{"Bavaria":["Munich","Nuremberg"],"Berlin":["Berlin"],"North Rhine-Westphalia":["Cologne","Düsseldorf"]},
+ Singapore:{} // no state-level data → graceful "not available" path
+};
+const CUR={India:['₹',83],USA:['$',1],Canada:['C$',1.35],Australia:['A$',1.5],"United Kingdom":['£',.79],Germany:['€',.92],Singapore:['S$',1.35]};
+const FLAV=["strong festival and gifting-season demand","price-sensitive but fast-growing online shoppers","dense urban living with limited space","rising adoption of quick-commerce and marketplaces","premium-leaning urban buyers","hot summers and monsoon/weather swings affecting usage","a young, social-media-driven buyer base","patchy last-mile delivery outside the city core"];
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ========== BASE DEMO DATA (existing niches preserved) ==========
+const P=(name,score,demand,competition,risk,why,risks,next,metrics)=>({name,score,demand,competition,risk,why,risks,next,metrics});
+const DATA={
+ pet:{problem:"Dog owners constantly struggle with separation anxiety — many complain about destructive behavior, excessive barking, and guilt when leaving their pets alone for work.",products:[
+  P("Interactive Smart Treat Dispenser","High",82,"Medium","Low","Solves separation anxiety with scheduled treats, camera monitoring, and app control so owners feel connected even when away.",["Device connectivity issues","Battery life complaints","Higher price point"],["Source from AliExpress / CJ","Test Facebook ads with anxiety angle","Create unboxing + demo video"],["Avg. selling price: $45–65","Est. margin: 35–50%","Search interest: Rising"]),
+  P("Calming Anxiety Vest for Dogs","High",76,"Medium","Low","Proven pressure-therapy concept. High demand during fireworks, storms, and travel seasons.",["Size variation returns","Seasonal demand spikes","Copycat products"],["Offer 4–5 size options","Bundle with calming treats","Target storm season ads"],["Avg. selling price: $28–40","Est. margin: 40–55%","Search interest: Steady"]),
+  P("Long-lasting Puzzle Feeder","Medium",71,"High","Medium","Keeps dogs mentally stimulated when alone. Strong reviews for reducing boredom chewing.",["Crowded market","Low differentiation","Shipping weight"],["Find unique design/mechanism","Focus on durable materials","Bundle with treats"],["Avg. selling price: $18–30","Est. margin: 30–45%","Search interest: High"])]},
+ fitness:{problem:"Beginners feel overwhelmed by complicated equipment and quit within weeks because they don’t know proper form or what routine to follow.",products:[
+  P("Smart Resistance Bands + App","High",85,"Medium","Low","Guided workouts and form tips remove the biggest barrier for home beginners.",["App quality expectations","Band durability","Competition from big brands"],["Partner with fitness creator","Emphasize beginner-friendly angle","Offer 30-day challenge"],["Avg. selling price: $35–55","Est. margin: 40–60%","Search interest: Rising"]),
+  P("Space-saving Adjustable Dumbbells","High",79,"High","Medium","Apartment dwellers want full gym range without the footprint.",["Heavy shipping costs","High competition","Quality control critical"],["Highlight compact design","Compare vs full rack in ads","Offer financing if possible"],["Avg. selling price: $120–200","Est. margin: 25–40%","Search interest: High"]),
+  P("Posture Corrector with Vibration","Medium",68,"Medium","Low","Desk workers training at home often have poor form — this helps both posture and training quality.",["Comfort complaints","Battery issues","Perceived gimmick"],["Focus on desk + home gym dual use","Show before/after posture","Bundle with resistance bands"],["Avg. selling price: $25–40","Est. margin: 45–60%","Search interest: Steady"])]},
+ kitchen:{problem:"People in small kitchens complain that most gadgets take too much counter space and are hard to store, so they avoid buying useful tools.",products:[
+  P("Collapsible Silicone Cookware Set","High",78,"Medium","Low","Folds flat for storage — solves the #1 complaint about kitchen tools in small homes.",["Heat resistance perception","Cleaning difficulty","Color fading"],["Show before/after storage comparison","Target apartment renters","Offer full set discount"],["Avg. selling price: $30–50","Est. margin: 40–55%","Search interest: Rising"]),
+  P("Multi-function Magnetic Knife Strip + Holder","Medium",70,"Medium","Low","Frees drawer space and keeps tools accessible in tight kitchens.",["Installation concerns","Weight limits","Wall damage worries"],["Include strong adhesive option","Show rental-friendly install","Bundle with utensils"],["Avg. selling price: $18–28","Est. margin: 45–60%","Search interest: Steady"]),
+  P("Compact Air Fryer (2–3L)","High",88,"High","Medium","Huge demand for small-capacity air fryers that fit tiny counters.",["Very competitive","Return rates on quality","Shipping size"],["Focus on true compact size","Emphasize easy clean","Target first-time buyers"],["Avg. selling price: $50–80","Est. margin: 25–40%","Search interest: Very High"])]}
+};
+// Keyword-specific product ideas for unknown niches (others use generic templates)
+const KEYMAP={farm:["Smart Soil Moisture Monitor","Portable Crop Health Scanner","Farm Irrigation Alert System"],student:["Study Productivity Kit","Compact Desk Organizer","Student Budget Planner"]};
+
+// ========== STATE & STORAGE ==========
+let HK='productpilot_history',SK='productpilot_saved';const TK='productpilot_theme';
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+let history=[],saved=[],currentReport=null,insightReport=null,selected=new Set(),busy=false,openIdx=null,confirmCb=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hash=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const placeOf=f=>[f.city,f.state,f.country].filter(Boolean).join(', ')||'Global market';
+const shortOf=f=>f.city||f.state||f.country||'your market';
+function money(usd,country){const c=CUR[country]||['$',1],v=usd*c[1],v2=c[1]>10?Math.round(v/10)*10:Math.round(v);return c[0]+v2.toLocaleString(c[1]>10?'en-IN':'en-US')}
+function saveHistory(){store.set(HK,history);updateNav()}
+function loadHistory(){const h=store.get(HK,[]);history=Array.isArray(h)?h:[]}
+function saveSaved(){store.set(SK,saved);updateNav()}
+function updateNav(){const b=$('savedBadge');b.style.display=saved.length?'inline':'none';b.textContent=saved.length;$('navResults').style.display=(currentReport||history.length)?'flex':'none'}
+
+// ========== NAVIGATION / SIDEBAR / THEME ==========
+const TITLES={dashboard:'Dashboard',new:'New Research',analyzing:'Analyzing…',results:'Research Report',history:'History',saved:'Saved Products',trends:'Market Trends',competitors:'Competitors',settings:'Settings'};
+function goTo(s){
+ document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$('screen-'+s).classList.add('active');
+ document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.screen===s));
+ $('topTitle').textContent=TITLES[s]||'ProductPilot';closeSidebar();$('content').scrollTop=0;
+ ({dashboard:renderDashboard,history:renderHistory,saved:renderSavedProducts,trends:()=>renderInsight('trends'),competitors:()=>renderInsight('competitors'),settings:renderSettings}[s]||(()=>{}))();
+}
+function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').classList.toggle('show',$('sidebar').classList.contains('open'))}
+function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').classList.remove('show')}
+function setTheme(t){document.documentElement.dataset.theme=t;store.set(TK,t);$('themeBtn').textContent=t==='dark'?'☀️ Light':'🌙 Dark';if($('screen-settings').classList.contains('active'))renderSettings()}
+function toggleTheme(){setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')}
+function showToast(m,bad){const t=$('toast');t.textContent=(bad?'⚠ ':'✓ ')+m;t.className='toast show'+(bad?' bad':'');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),2800)}
+function openModal(h){$('modalBody').innerHTML=h;$('modal').classList.add('show')}
+function closeModal(){$('modal').classList.remove('show')}
+function confirmBox(msg,cb,label){confirmCb=cb;openModal(`<h3>${esc(msg)}</h3><p>This cannot be undone.</p><div class="row"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="runConfirm()">${label||'Delete'}</button></div>`)}
+function runConfirm(){const c=confirmCb;confirmCb=null;closeModal();if(c)c()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeSidebar()}});
+
+// ========== LOCATION UI ==========
+const hasStates=c=>c&&LOCATIONS[c]&&Object.keys(LOCATIONS[c]).length>0;
+const opts=(arr,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option>${esc(x)}</option>`).join('');
+function initLocations(){$('country').innerHTML=opts(Object.keys(LOCATIONS),'Select country');onCountry(true)}
+function onCountry(skip){
+ const c=$('country').value,st=$('state');
+ if(!c){st.innerHTML='<option value="">Select country first</option>';st.disabled=true}
+ else if(!hasStates(c)){st.innerHTML='<option value="">Region/State not available</option>';st.disabled=true}
+ else{st.innerHTML=opts(Object.keys(LOCATIONS[c]),'Select state/province');st.disabled=false}
+ $('stateStar').style.display=(!c||hasStates(c))?'inline':'none';
+ onState();if(!skip){clearErr('country');clearErr('state')}
+}
+function onState(){
+ const c=$('country').value,s=$('state').value,ci=$('city');
+ if(c&&s&&LOCATIONS[c][s]){ci.innerHTML=opts(LOCATIONS[c][s],'Select city (optional)');ci.disabled=false}
+ else{ci.innerHTML=`<option value="">${c&&!hasStates(c)?'City not available':'Select state first'}</option>`;ci.disabled=true}
+ clearErr('state');
+}
+function setNiche(el,v){$('niche').value=v;clearErr('niche');document.querySelectorAll('#formCard .chip').forEach(c=>c.classList.toggle('selected',c===el))}
+
+// ========== VALIDATION ==========
+function setErr(k,m){const f=$('f-'+k);if(!f)return;f.classList.toggle('bad',!!m);if(m)$('e-'+k).textContent='❌ '+m}
+function clearErr(k){const f=$('f-'+k);if(f)f.classList.remove('bad')}
+function getForm(){return{country:$('country').value,state:$('state').disabled?'':$('state').value,city:$('city').disabled?'':$('city').value,niche:$('niche').value.trim(),customer:$('customer').value.trim(),focus:$('focus').value,notes:$('notes').value.trim()}}
+function validateForm(){
+ const f=getForm(),e={};
+ if(!f.country)e.country='Please select a country.';
+ else if(hasStates(f.country)&&!f.state)e.state='Please select a state/province.';
+ if(f.niche.length<2)e.niche='Please enter a niche or product category.';
+ if(f.customer.length<2)e.customer='Please enter the target customer.';
+ ['country','state','niche','customer'].forEach(k=>setErr(k,e[k]));
+ const first=Object.keys(e)[0];if(first)$(first).focus();
+ return{ok:!first,form:f};
+}
+
+// ========== GEMINI RESEARCH GENERATION (server-side key) ==========
+async function generateMarketResearch(f){
+ try{
+  const r=await fetch('/api/research',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)});
+  let payload={};try{payload=await r.json()}catch(_){ }
+  if(!r.ok)throw new Error(payload.error||`Backend request failed (${r.status})`);
+  const ai=payload;
+  if(!ai||!Array.isArray(ai.products)||ai.products.length<1)throw new Error('Gemini returned an incomplete report. Please try again.');
+  const out=buildDemoReport(f);
+  out.problem=String(ai.problem||'Gemini generated product research for this market.');
+  out.products=ai.products.slice(0,3).map((p,i)=>{
+   const u=Array.isArray(p.usd)?p.usd.map(Number):[20,40];
+   const comp=['Low','Medium','High'].includes(p.competition)?p.competition:'Medium';
+   const risk=['Low','Medium','High'].includes(p.risk)?p.risk:'Medium';
+   const opp=['High','Medium','Low'].includes(p.opportunity)?p.opportunity:'Medium';
+   return mkProduct(f,i,String(p.name||`Product idea ${i+1}`),String(p.why||p.description||''),Math.max(0,Math.min(100,Number(p.demand)||65)),comp,risk,opp,u,p.risks||[],p.next||[],['AI-estimated pricing; validate with suppliers'].concat(p.metrics||[]),hash(String(p.name||i)));
+  });
+  out.ai=true;out.generated=false;out.source='Gemini API';out.title=`AI Research: ${f.niche}`;
+  return out;
+ }catch(e){showToast(e.message||'Gemini request failed. Check your backend and API key.',true);throw e}
+}
+function buildDemoReport(f){
+ const key=f.niche.toLowerCase(),place=placeOf(f),short=shortOf(f),h=hash(place+key),cust=f.customer||'customers',N=f.niche;
+ let base=null;
+ if(/pet|dog|cat/.test(key))base=DATA.pet;else if(/fit|gym|workout/.test(key))base=DATA.fitness;else if(/kitchen|cook|home/.test(key))base=DATA.kitchen;
+ const flav=FLAV[h%FLAV.length],flav2=FLAV[(h>>3)%FLAV.length];
+ const issues=["low quality and short lifespan","confusing to set up and use","overpriced for what they deliver","poorly supported after purchase"];
+ const tpl=[
+  `Market gap identified for ${cust} in ${place}: `,`Local opportunity for ${cust} around ${short} (${f.state||f.country||'global'}): `,`${short} shows an unmet need among ${cust} — `][h%3];
+ const problem=base?`${tpl}${base.problem} Local factor: ${flav}.`:`${tpl}existing ${N} options are ${issues[h%4]}, and sellers rarely address ${cust} directly. Local factor: ${flav}.`;
+ let products;
+ if(base){products=base.products.map((p,i)=>{const m=p.metrics[0].match(/\$(\d+)[–-](\d+)/),usd=m?[+m[1],+m[2]]:[25,45];return mkProduct(f,i,p.name,p.why,p.demand,p.competition,p.risk,p.score,usd,p.risks,p.next,p.metrics,h)})}
+ else{
+  const km=Object.keys(KEYMAP).find(k=>key.includes(k));
+  const names=km?KEYMAP[km]:[`${N} Starter Kit`,`Smart ${N} Tracker`,`Compact ${N} Organizer`,`Premium ${N} Refill Bundle`];
+  const prices=[[25,45],[40,70],[18,32],[30,55]];
+  products=names.map((nm,i)=>{
+   const dem=62+((h>>(i*3))%25),comp=['Low','Medium','High'][(h>>i)%3],risk=['Low','Medium','High'][((h>>i)+i)%3===2?1:((h>>i)+i)%2];
+   return mkProduct(f,i,nm,`Built for ${cust} in ${short}: tackles the "${issues[(h+i)%4]}" frustration with a ${N.toLowerCase()}-focused product that fits local buying habits (${flav2}).`,dem,comp,risk,dem>=75&&comp!=='High'?'High':'Medium',prices[i],
+    ["Supplier quality control","Price resistance in "+short,"Need for early social proof"],[`Pre-sell to ${cust} in ${short}`,"Test 2–3 ad angles","Collect first 20 reviews"],[`Est. margin: ${30+(h>>i)%20}–${45+(h>>i)%15}%`,"Search interest: "+['Rising','Steady','Growing'][(h+i)%3]],h)});
+ }
+ const lows=products.map(p=>p.usd[0]),his=products.map(p=>p.usd[1]),lo=Math.min(...lows),hi=Math.max(...his),avg=Math.round((lo+hi)/2);
+ const search=Array.from({length:12},(_,m)=>Math.max(20,Math.min(100,Math.round(55+25*Math.sin((m+h%12)/12*2*Math.PI)+((h>>m)%8)))));
+ const pk=search.indexOf(Math.max(...search)),mn=search.indexOf(Math.min(...search));
+ const names=["NovaCraft","UrbanNest","PeakWorks","BrightLeaf","Zenvio","TrueNorth Goods"],pos=["Budget","Mid-range","Premium","Mid-range"];
+ const str=["Strong brand awareness","Fast delivery network","Large review volume","Aggressive pricing","Premium build quality"],weak=["Generic design, little localisation","Slow customer support","Limited range for "+cust,"Premium price, low value perception","Frequent stock-outs"];
+ return{
+  id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:new Date().toISOString(),form:f,generated:!base,
+  title:N,problem,products,
+  trends:[`Premium ${N}`,`Smart / connected ${N}`,`Compact ${N}`,`Eco-friendly ${N}`].map((n,i)=>({name:n,growth:8+((h>>i)%30),note:['Growing','Emerging','Steady','Niche but rising'][(h+i)%4]})),
+  search,season:`Search interest peaks around ${MONTHS[pk]} and is lowest around ${MONTHS[mn]} in ${short}.`,
+  prefs:[`${cust} in ${short} increasingly favour fast delivery and easy returns.`,`Short product videos strongly influence purchase decisions for ${cust}.`,`Value bundles outperform single items; ${flav2}.`],
+  competitors:[0,1,2,3].map(i=>({company:names[(h+i)%6],product:`${N} ${['Pro','Essentials','Plus','Lite'][i]}`,low:Math.round(lo*(.7+i*.2)),high:Math.round(hi*(.6+i*.25)),strength:str[(h+i)%5],weakness:weak[(h+i*2)%5],position:pos[i]})),
+  customerProblems:["Poor durability","Confusing setup or usage","Overpriced for quality","Slow delivery / weak support"].map((p,i)=>({problem:p,freq:Math.min(78,28+((h>>(i*2))%45)),example:["“Stopped working within two months.”","“Instructions were useless, I gave up.”","“Not worth this price compared to alternatives.”","“Took weeks to arrive and nobody replied.”"][i]+` — sample ${N} buyer, ${short}`,opportunity:["Durable materials + warranty","Guided onboarding / video setup","Fair-priced value tier","Local fulfilment + fast support"][i]})),
+  pricing:[{label:'Low price',usd:lo},{label:'Average price',usd:avg},{label:'Premium price',usd:hi},{label:'Suggested price',usd:Math.round(avg*.95)}]
+ };
+}
+function mkProduct(f,i,name,why,dem,comp,risk,opp,usd,risks,next,metrics,h){
+ const demand=Math.max(40,Math.min(97,dem+((h>>i)%9)-4)),price=money(usd[0],f.country)+'–'+money(usd[1],f.country);
+ return{name,description:why,why,demand,competition:comp,risk,price,usd,targetCustomer:f.customer,opportunity:opp,risks,next,metrics:metrics.map(m=>m.replace(/Avg\. selling price:.*/,'Avg. selling price: '+price))};
+}
+
+// ========== ANALYSIS FLOW (progress + skeleton) ==========
+const TASKS=["Collecting market trends...","Analyzing customer complaints...","Mapping competitors...","Finding product opportunities...","Scoring market potential..."];
+const STEPS=["Collecting market trends & search data","Reading customer reviews & complaints","Mapping competitors & pricing","Matching problems → product ideas","Scoring demand, competition & risk"];
+function setProgress(p){
+ $('pbar').style.width=p+'%';$('ppct').textContent=Math.round(p)+'%';
+ const t=Math.min(4,Math.floor(p/20));$('ptask').textContent=p>=100?'Done!':TASKS[t];
+ $('psteps').innerHTML=STEPS.map((s,i)=>`<div class="progress-step ${p>=(i+1)*20?'done':i===t?'active':''}"><div class="dot">${p>=(i+1)*20?'✓':i+1}</div><span>${s}</span></div>`).join('');
+}
+async function startAnalysis(){
+ if(busy)return;const v=validateForm();if(!v.ok||!planOK())return;busy=true;
+ $('analyzingNiche').textContent=`Scanning data for “${v.form.niche}” in ${placeOf(v.form)}`;goTo('analyzing');setProgress(0);
+ const t0=Date.now(),DUR=4200;let done=false,report=null,err=null;
+ generateMarketResearch(v.form).then(r=>{report=r;done=true}).catch(e=>{err=e;done=true});
+ await new Promise(res=>{const iv=setInterval(()=>{const raw=Math.min((Date.now()-t0)/DUR,1)*100,p=done?raw:Math.min(raw,92);setProgress(p);if(done&&raw>=100){clearInterval(iv);res()}},40)});
+ busy=false;
+ if(err||!report){showToast('Analysis failed. Please try again.',true);goTo('new');return}
+ insightReport=null;currentReport=report;selected.clear();openIdx=null;
+ $('skCards').innerHTML=[1,2,3,4].map(()=>'<div class="product-card"><div class="sk" style="height:18px;width:70%"></div><div class="sk" style="height:12px"></div><div class="sk" style="height:12px;width:85%"></div><div class="sk" style="height:8px"></div><div class="sk" style="height:8px"></div><div class="sk" style="height:8px"></div></div>').join('');
+ $('resBody').style.display='none';$('resSkel').style.display='block';goTo('results');
+ await delay(1000);
+ history.unshift(report);saveHistory();bumpUsage(); // auto-save every completed analysis
+ $('resSkel').style.display='none';$('resBody').style.display='block';
+ renderResults();showToast('Research report ready!');
+}
+
+// ========== RESULTS RENDERING ==========
+function renderScore(kind,val){
+ if(kind==='demand'){const c=val>=75?'var(--success)':val>=60?'var(--warning)':'var(--danger)';return`<div><div class="sc-h"><span>Demand</span><b>${val}/100</b></div><div class="bar"><i style="width:${val}%;background:${c}"></i></div></div>`}
+ const n={Low:1,Medium:2,High:3}[val]||2;
+ return`<div><div class="sc-h"><span>${kind==='competition'?'Competition':'Risk'}</span><b>${esc(val)}</b></div><div class="seg">${[1,2,3].map(i=>`<i class="${i<=n?'on c'+(kind?n:n):''}"></i>`).join('')}</div></div>`;
+}
+const isSaved=(r,i)=>saved.some(s=>s.sid===r.id+':'+i);
+function renderProductCard(p,i,r){
+ return`<div class="product-card ${selected.has(i)?'selected':''}" onclick="showDetail(${i})">
+ <div class="pc-top"><h3>${esc(p.name)}</h3><span class="badge ${p.opportunity==='High'?'badge-high':'badge-med'}">${esc(p.opportunity)}</span></div>
+ <label class="pc-chk" onclick="event.stopPropagation()"><input type="checkbox" ${selected.has(i)?'checked':''} onchange="toggleSelect(${i},this)"> Select to compare</label>
+ <p class="pc-why">${esc(p.description)}</p>
+ <div class="scores">${renderScore('demand',p.demand)}${renderScore('competition',p.competition)}${renderScore('risk',p.risk)}</div>
+ <div class="pc-foot"><span class="price">${esc(p.price)}</span><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();saveProduct(${i})">${isSaved(r,i)?'★ Saved':'☆ Save Product'}</button></div></div>`;
+}
+function renderProducts(){const r=currentReport;$('productsGrid').innerHTML=r.products.map((p,i)=>renderProductCard(p,i,r)).join('');updateCmpBar()}
+function renderResults(){
+ const r=currentReport;if(!r)return;const f=r.form;
+ $('resultsTitle').textContent=r.title;
+ $('resultsMeta').textContent=`${new Date(r.date).toLocaleString()} · ${placeOf(f)} · Target: ${f.customer}${f.focus?' · '+f.focus:''}`;
+ $('demoNote').innerHTML=r.ai?'✨ <b>Gemini AI-generated product ideas.</b> Demand, pricing, trends and competitor details are estimates, not independently verified live market data. Validate before investing.':(r.generated?'🧪 <b>Demo-generated market opportunity.</b>':'🧪 <b>Simulated demo research.</b>');
+ $('problemText').textContent=r.problem;
+ const tabs=[['opp','Opportunities'],['trends','Market Trends'],['problems','Customer Problems'],['competitors','Competitors'],['pricing','Pricing']];
+ $('tabs').innerHTML=tabs.map(t=>`<div class="tab" data-t="${t[0]}" onclick="showTab('${t[0]}')">${t[1]}</div>`).join('');
+ $('pane-trends').innerHTML=renderTrends(r);$('pane-problems').innerHTML=renderProblems(r);$('pane-competitors').innerHTML=renderCompetitors(r);$('pane-pricing').innerHTML=renderPricing(r);
+ $('detailPanel').classList.remove('show');renderProducts();showTab('opp');updateNav();activateRanges();
+}
+function showTab(t){document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.t===t));document.querySelectorAll('#screen-results .pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t))}
+function renderTrends(r){
+ const mx=Math.max(...r.search);
+ return`<div class="cards"><div class="mini"><h4>📈 Growing categories</h4><dl>${r.trends.map(t=>`<dt>${esc(t.name)}</dt><dd><span class="badge badge-high">+${t.growth}%</span> ${esc(t.note)}</dd>`).join('')}</dl></div>
+ <div class="mini"><h4>💡 Emerging preferences</h4><ul style="list-style:none;font-size:.88rem;line-height:1.5">${r.prefs.map(x=>`<li style="margin-bottom:.5rem">• ${esc(x)}</li>`).join('')}</ul></div></div>
+ <div class="mini" style="margin-top:1rem"><h4>🔎 Search interest &amp; seasonal demand (simulated)</h4><div class="bars">${r.search.map((v,i)=>`<div title="${MONTHS[i]}: ${v}/100" style="height:${v/mx*100}%" onclick="monthInfo(this,'${MONTHS[i]}',${v})"></div>`).join('')}</div><div class="bars-l">${MONTHS.map(m=>`<span>${m}</span>`).join('')}</div><p style="margin-top:.7rem;font-size:.86rem;color:var(--text-muted)" class="monthOut">${esc(r.season)} Click a bar for details.</p></div>`;
+}
+function monthInfo(el,m,v){const box=el.closest('.mini');box.querySelectorAll('.bars div').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');box.querySelector('.monthOut').textContent=`${m}: search interest ${v}/100 — ${v>=75?'high-demand window, scale ads':v>=50?'steady demand':'low season, focus on retention & bundles'}.`}
+function renderProblems(r){return`<div class="cards">${r.customerProblems.map(p=>`<div class="mini"><h4>${esc(p.problem)}</h4><div class="sc-h"><span>Frequency</span><b>${p.freq}%</b></div><div class="bar" style="margin-bottom:.8rem"><i style="width:${p.freq}%;background:var(--warning)"></i></div><p style="font-size:.86rem;font-style:italic;color:var(--text-muted);margin-bottom:.7rem">${esc(p.example)}</p><p style="font-size:.86rem"><b>Opportunity:</b> ${esc(p.opportunity)}</p></div>`).join('')}</div><p style="font-size:.78rem;color:var(--text-muted);margin-top:.8rem">Complaint examples are simulated demo content.</p>`}
+function compCards(r,flt){return r.competitors.filter(c=>!flt||c.position===flt).map(c=>`<div class="mini"><h4>${esc(c.company)} <span class="badge badge-med">${esc(c.position)}</span></h4><dl><dt>Product</dt><dd>${esc(c.product)}</dd><dt>Price</dt><dd>${money(c.low,r.form.country)}–${money(c.high,r.form.country)}</dd><dt>Strength</dt><dd>${esc(c.strength)}</dd><dt>Weakness</dt><dd>${esc(c.weakness)}</dd><dt>Positioning</dt><dd>${esc(c.position)} segment</dd></dl></div>`).join('')||'<div class="empty-state">No competitors in this segment.</div>'}
+function renderCompetitors(r){return`<div class="toolbar"><label style="font-size:.85rem;color:var(--text-muted)">Segment:</label><select onchange="filterComp(this.value)"><option value="">All</option><option>Budget</option><option>Mid-range</option><option>Premium</option></select></div><div class="cards compList">${compCards(r,'')}</div><p style="font-size:.78rem;color:var(--text-muted);margin-top:.8rem">Competitors are fictional demo companies.</p>`}
+function filterComp(v){const r=activeReport();if(r)document.querySelectorAll('.compList').forEach(e=>e.innerHTML=compCards(r,v))}
+function renderPricing(r){
+ const c=r.form.country,lo=r.pricing[0].usd,hi=r.pricing[2].usd,sg=r.pricing[3].usd;
+ return`<div class="cards">${r.pricing.map(p=>`<div class="stat"><div class="l">${p.label}</div><div class="v">${money(p.usd,c)}</div></div>`).join('')}</div>
+ <div class="mini pricebox" data-lo="${lo}" data-hi="${hi}" data-c="${esc(c)}" style="margin-top:1rem"><h4>🎚 Test your price</h4><input type="range" min="${Math.round(lo*.5)}" max="${Math.round(hi*1.5)}" value="${sg}" oninput="priceCheck(this)"><p class="pcOut" style="margin-top:.6rem;font-size:.9rem"></p></div>`;
+}
+function priceCheck(el){const b=el.closest('.pricebox'),v=+el.value,lo=+b.dataset.lo,hi=+b.dataset.hi;b.querySelector('.pcOut').innerHTML=`<b>${money(v,b.dataset.c)}</b> — ${v<lo?'below market: risks signalling low quality / thin margin':v>hi?'above premium range: needs strong brand proof':'inside the competitive range'}.`}
+function activateRanges(){document.querySelectorAll('.pricebox input').forEach(priceCheck)}
+
+// ========== PRODUCT DETAIL / SAVE / COMPARE ==========
+function showDetail(i){
+ const r=currentReport,p=r.products[i],f=r.form;openIdx=i;
+ const L=a=>`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`,short=shortOf(f);
+ $('detailPanel').innerHTML=`<div class="dp-head"><h2>${esc(p.name)}</h2><div class="hdr-btns"><button class="btn btn-ghost btn-sm" onclick="toggleSelectBtn(${i})">${selected.has(i)?'✓ Selected':'⚖ Compare'}</button><button class="btn btn-ghost btn-sm" onclick="saveProduct(${i})">${isSaved(r,i)?'★ Saved':'☆ Save Product'}</button><button class="btn btn-ghost btn-sm" onclick="exportCSV(currentReport,[currentReport.products[${i}]])">⬇ Export</button><button class="btn btn-ghost btn-sm" onclick="closeDetail()">✕</button></div></div>
+ <div class="detail-grid">
+ <div class="detail-block"><h4>Problem solved</h4><p>${esc(r.problem)}</p></div>
+ <div class="detail-block"><h4>Why customers need it</h4><p>${esc(p.why)}</p></div>
+ <div class="detail-block"><h4>Target customer &amp; market</h4><p>${esc(p.targetCustomer)} · ${esc(placeOf(f))}${f.focus?' · '+esc(f.focus):''}</p></div>
+ <div class="detail-block"><h4>Scores &amp; estimated price</h4><div class="scores">${renderScore('demand',p.demand)}${renderScore('competition',p.competition)}${renderScore('risk',p.risk)}</div><p style="margin-top:.7rem"><b>${esc(p.price)}</b></p></div>
+ <div class="detail-block"><h4>Opportunity explanation</h4><p>${esc(p.opportunity)} opportunity: demand ${p.demand}/100 with ${p.competition.toLowerCase()} competition and ${p.risk.toLowerCase()} risk in ${esc(short)}.</p></div>
+ <div class="detail-block"><h4>Potential competitors</h4>${L(r.competitors.slice(0,3).map(c=>`${c.company} — ${c.product} (${c.position})`))}</div>
+ <div class="detail-block"><h4>Suggested positioning</h4><p>Position as the ${p.competition==='High'?'differentiated, best-value':'category-defining'} choice for ${esc(p.targetCustomer)} in ${esc(short)}, led by the main customer pain point.</p></div>
+ <div class="detail-block"><h4>Validation ideas</h4>${L([`Landing-page smoke test aimed at ${p.targetCustomer} in ${short}`,'Survey 20–30 target buyers in local communities / groups','Pre-sell 10 units or start a waitlist before buying stock'])}</div>
+ <div class="detail-block"><h4>Key risks</h4>${L(p.risks)}</div>
+ <div class="detail-block"><h4>Next steps &amp; metrics</h4>${L(p.next.concat(p.metrics))}</div></div>`;
+ $('detailPanel').classList.add('show');$('detailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeDetail(){$('detailPanel').classList.remove('show');openIdx=null}
+function saveProduct(i){
+ const r=currentReport,sid=r.id+':'+i,k=saved.findIndex(s=>s.sid===sid);
+ if(k>=0){saved.splice(k,1);showToast('Removed from saved products')}
+ else{saved.unshift({sid,reportId:r.id,form:r.form,product:r.products[i],problem:r.problem,savedAt:new Date().toISOString()});showToast('Product saved')}
+ saveSaved();renderProducts();if(openIdx!==null)showDetail(openIdx);
+}
+function toggleSelect(i,el){
+ if(selected.has(i))selected.delete(i);
+ else if(selected.size>=4){showToast('You can compare up to 4 products',true);if(el)el.checked=false;return}
+ else selected.add(i);
+ renderProducts();
+}
+function toggleSelectBtn(i){toggleSelect(i);showDetail(i)}
+function clearSelection(){selected.clear();renderProducts()}
+function updateCmpBar(){$('cmpBar').classList.toggle('show',selected.size>0);$('cmpCount').textContent=selected.size+' selected'}
+function compareProducts(){
+ if(selected.size<2){showToast('Select at least 2 products to compare',true);return}
+ const r=currentReport,ps=[...selected].sort().map(i=>r.products[i]);
+ const row=(l,fn)=>`<tr><td>${l}</td>${ps.map(p=>`<td>${fn(p)}</td>`).join('')}</tr>`;
+ openModal(`<h3 style="margin-bottom:1rem">Product comparison</h3><div class="tbl-wrap"><table><thead><tr><th>Metric</th>${ps.map(p=>`<th>${esc(p.name)}</th>`).join('')}</tr></thead><tbody>
+ ${row('Demand',p=>renderScore('demand',p.demand))}${row('Competition',p=>renderScore('competition',p.competition))}${row('Risk',p=>renderScore('risk',p.risk))}${row('Price',p=>esc(p.price))}${row('Opportunity',p=>esc(p.opportunity))}${row('Target customer',p=>esc(p.targetCustomer))}</tbody></table></div><div class="row" style="margin-top:1rem"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>`);
+}
+
+// ========== EXPORTS ==========
+function download(name,mime,content){const b=new Blob([content],{type:mime}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const slug=s=>String(s||'').replace(/[^A-Za-z0-9]+/g,'');
+function fname(r,ext){const f=r.form,st=f.state?(f.state.trim().split(/\s+/).length>1?f.state.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase():slug(f.state)):'';return['ProductPilot-Market-Report',slug(f.country),st,slug(f.city)].filter(Boolean).join('-')+'.'+ext}
+function exportCSV(r,list){
+ r=r||currentReport;if(!r){showToast('Open a report first',true);return}list=list||r.products;const f=r.form;
+ const H=['Product','Category','Problem','Demand','Competition','Risk','Estimated Price','Target Customer','Market','Country','State','City'];
+ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const rows=list.map(p=>[p.name,f.niche,r.problem,p.demand,p.competition,p.risk,p.price,p.targetCustomer,f.focus||'Not specified',f.country,f.state,f.city]);
+ download(fname(r,'csv'),'text/csv;charset=utf-8','\uFEFF'+[H,...rows].map(x=>x.map(q).join(',')).join('\r\n'));showToast('CSV downloaded');
+}
+function exportPDF(){
+ const r=currentReport;if(!r){showToast('Open a report first',true);return}
+ if(!window.jspdf){showToast('PDF library failed to load (check internet connection)',true);return}
+ const d=new window.jspdf.jsPDF(),f=r.form;let y=20;
+ const cl=s=>String(s==null?'':s).replace(/₹/g,'Rs.').replace(/€/g,'EUR ').replace(/£/g,'GBP ').replace(/–/g,'-').replace(/[“”]/g,'"').replace(/[’]/g,"'").replace(/[^\x20-\x7E]/g,'');
+ const ln=(t,s,b,gap)=>{d.setFontSize(s||10);d.setFont('helvetica',b?'bold':'normal');d.splitTextToSize(cl(t),175).forEach(l=>{if(y>280){d.addPage();y=20}d.text(l,18,y);y+=(s||10)*.45+2});y+=gap||0};
+ d.setFillColor(108,92,231);d.rect(0,0,210,14,'F');d.setTextColor(255);d.setFontSize(13);d.setFont('helvetica','bold');d.text('ProductPilot AI - Market Research Report',18,9.5);d.setTextColor(30);y=26;
+ ln('Research Overview',14,true,1);
+ [['Research date',new Date(r.date).toLocaleString()],['Country',f.country||'-'],['State',f.state||'-'],['City',f.city||'-'],['Niche',f.niche],['Target customer',f.customer],['Focus market',f.focus||'Not specified'],['Research notes',f.notes||'-']].forEach(x=>ln(x[0]+': '+x[1],10));
+ y+=3;ln('Main Market Problem',14,true,1);ln(r.problem,10,false,3);
+ ln('Suggested Products',14,true,1);
+ r.products.forEach((p,i)=>{ln(`${i+1}. ${p.name}`,11,true);ln(p.description,10);ln(`Demand: ${p.demand}/100 | Competition: ${p.competition} | Risk: ${p.risk} | Price: ${p.price} | Opportunity: ${p.opportunity}`,10,false,3)});
+ ln('Product Comparison',14,true,1);
+ r.products.forEach(p=>ln(`${p.name} -> Demand ${p.demand} | Competition ${p.competition} | Risk ${p.risk} | ${p.price} | ${p.opportunity}`,9));
+ y+=3;ln('Recommendations',14,true,1);
+ const best=[...r.products].sort((a,b)=>b.demand-a.demand)[0];
+ ln(`Lead with "${best.name}" (demand ${best.demand}/100, ${best.competition} competition).`,10);
+ best.next.forEach(n=>ln('- '+n,10));ln(r.season||'',10,false,4);
+ ln('Demo/simulated research - connect an AI research API for live market data.',8);
+ d.save(fname(r,'pdf'));showToast('PDF downloaded');
+}
+
+// ========== DASHBOARD / HISTORY / SAVED ==========
+function renderDashboard(){
+ const all=history.flatMap(h=>h.products),avg=all.length?Math.round(all.reduce((a,p)=>a+p.demand,0)/all.length):'—';
+ const markets=new Set(history.map(h=>[h.form.country,h.form.state,h.form.city].join('|'))).size;
+ const st=[['Researches Completed',history.length],['Saved Products',saved.length],['Markets Analyzed',markets],['Average Demand Score',avg]];
+ $('screen-dashboard').innerHTML=`<h1 class="pg">Welcome back${user?', '+esc(user.name.split(' ')[0]):''} 👋</h1><p class="sub">Your research overview — ${user?esc(user.email):'your account'}.</p>
+ <div class="stats">${st.map(s=>`<div class="stat"><div class="l">${s[0]}</div><div class="v">${s[1]}</div></div>`).join('')}</div>
+ <div class="hdr-btns" style="margin-bottom:1.5rem"><button class="btn btn-primary" onclick="goTo('new')">🔍 New Research</button><button class="btn btn-ghost" onclick="goTo('saved')">⭐ Saved Products</button><button class="btn btn-ghost" onclick="goTo('trends')">📈 Market Trends</button></div>
+ <h3 style="margin-bottom:.35rem">Market analytics</h3><p class="sub" style="margin-bottom:.6rem">Explore demand scores and opportunity mix. Hover or tap chart points for details; click legends to toggle data.</p>
+ <div class="analytics-grid"><section class="chart-card"><div class="chart-toolbar"><div><h3>Demand score over time</h3><p class="chart-desc" style="margin:4px 0 0">Average demand score across your research reports.</p></div><select id="demandMetric" onchange="renderDashboardCharts()" aria-label="Demand chart metric"><option value="demand">Demand score</option><option value="competition">Competition score</option><option value="risk">Risk score</option></select></div><div class="chart-wrap" id="demandChartWrap"><canvas id="demandChart" aria-label="Interactive score line chart"></canvas></div></section>
+ <section class="chart-card"><h3>Product opportunity mix</h3><p class="chart-desc">Share of products rated high, medium, or low opportunity.</p><div class="chart-wrap" id="mixChartWrap"><canvas id="mixChart" aria-label="Interactive product opportunity doughnut chart"></canvas></div></section></div>
+ <h3 style="margin-bottom:.8rem">Recent research</h3>${history.length?`<div class="list">${history.slice(0,4).map(historyRow).join('')}</div>`:emptyState('📋','No research yet. Run your first analysis!','Start Research',"goTo('new')")}`;
+ renderDashboardCharts();
+}
+let ppDashboardCharts=[];
+function renderDashboardCharts(){
+ if(typeof Chart==='undefined')return;
+ ppDashboardCharts.forEach(c=>{try{c.destroy()}catch(e){}});ppDashboardCharts=[];
+ const muted=getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim()||'#8B95A8';
+ const metric=($('demandMetric')&&$('demandMetric').value)||'demand';
+ const score=p=>{if(metric==='demand')return Number(p.demand)||0;const v=String(p[metric]||'Medium').toLowerCase();return v==='low'?25:v==='medium'?60:v==='high'?90:0};
+ const reports=history.slice(0,10).reverse();
+ const labels=reports.map((h,i)=>String(h.form?.niche||h.title||`Report ${i+1}`).slice(0,22));
+ const values=reports.map(h=>{const ps=h.products||[];return ps.length?Math.round(ps.reduce((sum,p)=>sum+score(p),0)/ps.length):0});
+ const dc=$('demandChart'),mc=$('mixChart');
+ if(dc){if(!reports.length){$('demandChartWrap').innerHTML='<div class="chart-empty">Your chart will appear after your first market research.</div>';}else{ppDashboardCharts.push(new Chart(dc,{type:'line',data:{labels,datasets:[{label:metric==='demand'?'Average demand score':metric==='competition'?'Competition index':'Risk index',data:values,borderColor:'#8b7cf6',backgroundColor:'rgba(108,92,231,.16)',fill:true,tension:.35,pointRadius:4,pointHoverRadius:8,pointHitRadius:12}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{legend:{display:true,labels:{color:muted,usePointStyle:true}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}/100`}}},scales:{y:{min:0,max:100,grid:{color:'rgba(139,149,168,.15)'},ticks:{color:muted}},x:{grid:{display:false},ticks:{color:muted,maxRotation:35}}}}}));}}
+ if(mc){const ps=history.flatMap(h=>h.products||[]);const count={High:0,Medium:0,Low:0};ps.forEach(p=>{const k=['High','Medium','Low'].includes(p.opportunity)?p.opportunity:'Medium';count[k]++});if(!ps.length){$('mixChartWrap').innerHTML='<div class="chart-empty">Product opportunity mix will appear once a report is generated.</div>';}else{ppDashboardCharts.push(new Chart(mc,{type:'doughnut',data:{labels:['High opportunity','Medium opportunity','Low opportunity'],datasets:[{data:[count.High,count.Medium,count.Low],backgroundColor:['#00c781','#ffb800','#8b95a8'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#151B2B',borderWidth:3,hoverOffset:9}]},options:{responsive:true,maintainAspectRatio:false,cutout:'64%',plugins:{legend:{position:'bottom',labels:{color:muted,usePointStyle:true,padding:16}},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} product(s) (${ps.length?Math.round(c.raw/ps.length*100):0}%)`}}}}}));}}
+}
+
+const emptyState=(i,t,b,fn)=>`<div class="empty-state"><div class="big-icon">${i}</div><p>${t}</p>${b?`<button class="btn btn-primary" style="margin-top:1rem" onclick="${fn}">${b}</button>`:''}</div>`;
+function historyRow(h){return`<div class="row-item"><div style="cursor:pointer;flex:1;min-width:180px" onclick="openHistory('${h.id}')"><div class="t">${esc(h.title)}</div><div class="d">${esc(placeOf(h.form))} · ${esc(h.form.customer)} · ${new Date(h.date).toLocaleString()}</div></div><div class="row-btns"><button class="btn btn-ghost btn-sm" onclick="openHistory('${h.id}')">View →</button><button class="btn btn-danger btn-sm" onclick="deleteHistory('${h.id}')">🗑 Delete</button></div></div>`}
+function renderHistory(){
+ $('screen-history').innerHTML=`<div class="results-header"><div><h1 class="pg">Research History</h1><p class="sub" style="margin-bottom:0">Saved automatically to your account.</p></div>${history.length?'<button class="btn btn-danger" onclick="clearHistory()">Clear All History</button>':''}</div>${history.length?`<div class="list">${history.map(historyRow).join('')}</div>`:emptyState('📋','No reports yet. Run your first research!','Start Research',"goTo('new')")}`;
+}
+function openHistory(id){const r=history.find(h=>h.id===id);if(!r)return;currentReport=r;insightReport=null;selected.clear();$('resSkel').style.display='none';$('resBody').style.display='block';renderResults();goTo('results')}
+function openLast(){if(!currentReport&&history[0])currentReport=history[0];if(currentReport){$('resSkel').style.display='none';$('resBody').style.display='block';renderResults();goTo('results')}else goTo('new')}
+function deleteHistory(id){confirmBox('Delete this research report?',()=>{history=history.filter(h=>h.id!==id);if(currentReport&&currentReport.id===id)currentReport=null;saveHistory();renderHistory();if($('screen-dashboard').classList.contains('active'))renderDashboard();showToast('Report deleted')})}
+function clearHistory(){confirmBox('Clear all research history?',()=>{history=[];currentReport=null;saveHistory();renderHistory();showToast('History cleared')},'Clear All')}
+function renderSavedProducts(){
+ $('screen-saved').innerHTML=`<h1 class="pg">Saved Products</h1><p class="sub">Your bookmarked product opportunities.</p>${saved.length?`<div class="products-grid">${saved.map(s=>`<div class="product-card" style="cursor:default"><div class="pc-top"><h3>${esc(s.product.name)}</h3><span class="badge ${s.product.opportunity==='High'?'badge-high':'badge-med'}">${esc(s.product.opportunity)}</span></div><p class="pc-why">${esc(s.product.description)}</p><div class="scores">${renderScore('demand',s.product.demand)}${renderScore('competition',s.product.competition)}${renderScore('risk',s.product.risk)}</div><div class="pc-foot"><span class="price">${esc(s.product.price)}</span><span class="d" style="color:var(--text-muted);font-size:.78rem">${esc(shortOf(s.form))}</span></div><div class="row-btns">${history.some(h=>h.id===s.reportId)?`<button class="btn btn-ghost btn-sm" onclick="openHistory('${s.reportId}')">Open report</button>`:''}<button class="btn btn-ghost btn-sm" onclick="exportSaved('${s.sid}')">⬇ CSV</button><button class="btn btn-danger btn-sm" onclick="removeSaved('${s.sid}')">Remove</button></div></div>`).join('')}</div>`:emptyState('⭐','No saved products yet. Save one from a research report.','Start Research',"goTo('new')")}`;
+}
+function removeSaved(sid){saved=saved.filter(s=>s.sid!==sid);saveSaved();renderSavedProducts();showToast('Removed')}
+function exportSaved(sid){const s=saved.find(x=>x.sid===sid);if(s)exportCSV({form:s.form,problem:s.problem,products:[s.product],id:s.reportId,date:s.savedAt},[s.product])}
+
+// ========== TRENDS / COMPETITORS SCREENS ==========
+const activeReport=()=>insightReport||currentReport||history[0]||null;
+function renderInsight(kind){
+ const r=activeReport(),chips=[['Pet products for dog owners','🐾 Pets'],['Home fitness equipment','🏋️ Fitness'],['Kitchen gadgets for small apartments','🍳 Kitchen'],['Smart Farming','🌾 Smart Farming']].map(c=>`<span class="chip" onclick="quickInsight('${c[0]}')">${c[1]}</span>`).join('');
+ $('screen-'+kind).innerHTML=`<h1 class="pg">${kind==='trends'?'Market Trends':'Competitors'}</h1><p class="sub">${r?`Showing: <b>${esc(r.title)}</b> · ${esc(placeOf(r.form))} (simulated demo data)`:'Pick a niche to explore demo data, or run a full analysis.'}</p><div class="chip-row" style="margin:0 0 1.2rem">${chips}</div>${r?(kind==='trends'?renderTrends(r):renderCompetitors(r)):emptyState('📊','No research yet — pick a niche above or start a new analysis.','Start Research',"goTo('new')")}`;
+}
+function quickInsight(n){insightReport=buildDemoReport({country:'',state:'',city:'',niche:n,customer:'online shoppers',focus:'',notes:''});renderInsight($('screen-trends').classList.contains('active')?'trends':'competitors')}
+
+// ========== SETTINGS / DATA ==========
+function renderSettings(){
+ const dark=document.documentElement.dataset.theme==='dark';
+ const row=(t,d,b)=>`<div class="set-row"><div><b>${t}</b><p>${d}</p></div><div class="row-btns">${b}</div></div>`;
+ $('screen-settings').innerHTML=`<h1 class="pg">Settings</h1><p class="sub">Preferences and data for your account (stored only in this browser).</p><div class="card" style="max-width:760px">
+ ${user?row('Account',esc(user.name)+' · '+esc(user.email),'<button class="btn btn-ghost btn-sm" onclick="editProfile()">Edit profile</button><button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button><button class="btn btn-danger btn-sm" onclick="deleteAccount()">Delete account</button>'):''}
+ ${user?row('Plan',isPro()?'Pro: unlimited research.':`Free: ${Math.max(0,FREE_LIMIT-(user.used||0))} of ${FREE_LIMIT} researches left.`,isPro()?'<button class="btn btn-ghost btn-sm" onclick="setPlan(\'free\')">Switch to Free</button>':'<button class="btn btn-primary btn-sm" onclick="setPlan(\'pro\')">Upgrade to Pro</button>'):''}
+ ${user?row('Gemini AI engine','API key is kept on the server, never in this browser.','<button class="btn btn-ghost btn-sm" onclick="testGeminiBackend()">Test connection</button>'):''}
+ ${row('Theme','Switch between dark and light mode.',`<button class="btn ${dark?'btn-primary':'btn-ghost'} btn-sm" onclick="setTheme('dark')">🌙 Dark</button><button class="btn ${dark?'btn-ghost':'btn-primary'} btn-sm" onclick="setTheme('light')">☀️ Light</button>`)}
+ ${row('Clear history',history.length+' saved reports.','<button class="btn btn-danger btn-sm" onclick="clearHistory()">Clear history</button>')}
+ ${row('Clear saved products',saved.length+' saved products.','<button class="btn btn-danger btn-sm" onclick="clearSaved()">Clear saved</button>')}
+ ${row('Export app data','Download history, saved products and settings as JSON.','<button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export</button>')}
+ ${row('Import app data','Restore from a productpilot-data.json file (replaces current data).','<button class="btn btn-ghost btn-sm" onclick="$(\'importFile\').click()">⬆ Import</button>')}
+ ${row('Reset demo data','Erase everything and restore defaults.','<button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset demo</button>')}</div>`;
+}
+function clearSaved(){confirmBox('Clear all saved products?',()=>{saved=[];saveSaved();renderSettings();showToast('Saved products cleared')},'Clear All')}
+function exportData(){download('productpilot-data.json','application/json',JSON.stringify({app:'ProductPilot',version:1,exported:new Date().toISOString(),theme:document.documentElement.dataset.theme,history,saved},null,2));showToast('Data exported')}
+function importData(inp){
+ const file=inp.files[0];inp.value='';if(!file)return;const fr=new FileReader();
+ fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!d||d.app!=='ProductPilot'||!Array.isArray(d.history)||!Array.isArray(d.saved))throw 0;
+  history=d.history.filter(h=>h&&h.id&&h.form&&Array.isArray(h.products));saved=d.saved.filter(s=>s&&s.sid&&s.product);
+  saveHistory();saveSaved();if(d.theme==='light'||d.theme==='dark')setTheme(d.theme);currentReport=null;renderSettings();showToast('Data imported')}catch(e){showToast('Invalid ProductPilot data file',true)}};
+ fr.onerror=()=>showToast('Could not read file',true);fr.readAsText(file);
+}
+function confirmReset(){confirmBox('Reset all demo data?',resetDemo,'Reset')}
+function resetDemo(){
+ history=[];saved=[];currentReport=null;insightReport=null;selected.clear();store.del(HK);store.del(SK);store.del(TK);
+ setTheme('dark');['niche','customer','notes'].forEach(k=>$(k).value='');$('focus').value='';$('country').value='';onCountry(true);
+ document.querySelectorAll('.field.bad').forEach(f=>f.classList.remove('bad'));updateNav();goTo('dashboard');showToast('Demo data reset');
+}
+
+// ========== AUTH ==========
+const UK='productpilot_users',SESS='productpilot_session';
+let user=null,authMode='login',resetCode=null;
+const pwHash=async(e,p)=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(e+'|'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(_){return'h'+hash(e+'|'+p)}};
+function showAuth(m){authMode=m;const s=m==='signup',f=m==='forgot',r=m==='reset',l=m==='login';
+ $('auth').classList.add('show');$('authTabs').style.display=f||r?'none':'flex';$('tabLogin').classList.toggle('on',!s);$('tabSignup').classList.toggle('on',s);
+ $('fName').style.display=s?'block':'none';$('fCode').style.display=r?'block':'none';$('fPassW').style.display=f?'none':'block';$('fPass2').style.display=s||r?'block':'none';
+ $('fPassW').querySelector('label').textContent=r?'New password':'Password';$('aEmail').readOnly=r;
+ $('aBtn').textContent={login:'Login',signup:'Create account',forgot:'Send reset code',reset:'Reset password'}[m];
+ $('aForgot').style.display=l?'block':'none';$('aBack').style.display=f||r?'block':'none';
+ $('aErr').style.display='none';$('aInfo').style.display='none';$('aPass').autocomplete=l?'current-password':'new-password'}
+function authErr(m){const e=$('aErr');e.textContent=m;e.style.display='block'}
+async function submitAuth(){
+ const name=$('aName').value.trim(),email=$('aEmail').value.trim().toLowerCase(),pw=$('aPass').value,users=store.get(UK,{});
+ if(!/^\S+@\S+\.\S+$/.test(email))return authErr('Enter a valid email.');
+ if(authMode==='forgot'){if(!users[email])return authErr('No account found with this email.');resetCode={email,code:String(Math.floor(100000+Math.random()*900000)),exp:Date.now()+600000};showAuth('reset');$('aEmail').value=email;$('aInfo').textContent='Demo mode: no email is sent. Your reset code is '+resetCode.code+' (valid for 10 minutes).';$('aInfo').style.display='block';return}
+ if(pw.length<6)return authErr('Password must be at least 6 characters.');
+ if(authMode==='reset'){if(!resetCode||resetCode.email!==email||Date.now()>resetCode.exp)return authErr('Code expired. Request a new one.');if($('aCode').value.trim()!==resetCode.code)return authErr('Wrong reset code.');if(pw!==$('aPass2').value)return authErr('Passwords do not match.');users[email].pw=await pwHash(email,pw);store.set(UK,users);resetCode=null;['aCode','aPass','aPass2'].forEach(i=>$(i).value='');showAuth('login');$('aEmail').value=email;showToast('Password reset. Log in with your new password.');return}
+ if(authMode==='signup'){
+  if(!name)return authErr('Enter your name.');
+  if(pw!==$('aPass2').value)return authErr('Passwords do not match.');
+  if(users[email])return authErr('This email is already registered. Log in instead.');
+  const first=!Object.keys(users).length;
+  users[email]={name,email,pw:await pwHash(email,pw),created:Date.now()};store.set(UK,users);
+  if(first)['history','saved'].forEach(k=>{const old=store.get('productpilot_'+k,null);if(old){store.set('productpilot_'+k+'_'+email,old);store.del('productpilot_'+k)}}); // pehle account ko purani research mil jati hai
+ }else{
+  const u=users[email];if(!u||u.pw!==await pwHash(email,pw))return authErr('Wrong email or password.');
+ }
+ startSession(email);
+}
+function startSession(email){
+ const u=store.get(UK,{})[email];if(!u)return showAuth('login');
+ user=u;store.set(SESS,email);HK='productpilot_history_'+email;SK='productpilot_saved_'+email;
+ loadHistory();saved=store.get(SK,[]);if(!Array.isArray(saved))saved=[];currentReport=null;insightReport=null;selected.clear();
+ $('auth').classList.remove('show');['aPass','aPass2','aName'].forEach(i=>$(i).value='');
+ paintUser();
+ updateNav();goTo('dashboard');showToast('Welcome, '+u.name.split(' ')[0]);importShared();
+}
+function logout(){store.del(SESS);user=null;history=[];saved=[];currentReport=null;insightReport=null;$('aEmail').value='';showAuth('login')}
+function deleteAccount(){confirmBox('Delete your account and all its research?',()=>{const us=store.get(UK,{});delete us[user.email];store.set(UK,us);store.del(HK);store.del(SK);logout()},'Delete account')}
+
+// ========== PLAN / PROFILE / AI KEY / SHARE ==========
+const FREE_LIMIT=5,KK=()=>'productpilot_key_'+user.email,isPro=()=>user&&user.plan==='pro';
+function paintUser(){$('uAvatar').textContent=user.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();$('uName').textContent=user.name;$('uPlan').textContent=isPro()?'Pro Plan':'Free · '+Math.max(0,FREE_LIMIT-(user.used||0))+' left'}
+function saveUser(){const us=store.get(UK,{});us[user.email]=user;store.set(UK,us);paintUser()}
+function planOK(){if(isPro()||(user.used||0)<FREE_LIMIT)return true;openModal(`<h3>Free limit reached</h3><p>You have used all ${FREE_LIMIT} free researches. Pro is unlimited (demo upgrade, no payment).</p><div class="row"><button class="btn btn-ghost" onclick="closeModal()">Not now</button><button class="btn btn-primary" onclick="setPlan('pro')">Upgrade to Pro</button></div>`);return false}
+function setPlan(p){user.plan=p;saveUser();closeModal();renderSettings();showToast(p==='pro'?'Pro activated':'Switched to Free')}
+function bumpUsage(){user.used=(user.used||0)+1;saveUser()}
+function editProfile(){openModal(`<h3>Edit profile</h3><div class="field"><label>Name</label><input id="pName" value="${esc(user.name)}"></div><div class="field"><label>New password (optional)</label><input id="pPass" type="password" autocomplete="new-password"></div><div class="row"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProfile()">Save changes</button></div>`)}
+async function saveProfile(){const n=$('pName').value.trim(),p=$('pPass').value;if(!n)return showToast('Enter your name',true);if(p&&p.length<6)return showToast('Password must be at least 6 characters',true);user.name=n;if(p)user.pw=await pwHash(user.email,p);saveUser();closeModal();renderSettings();showToast('Profile updated')}
+async function testGeminiBackend(){showToast('Checking Gemini connection…');try{const r=await fetch('/api/health');const d=await r.json();if(!r.ok||!d.gemini_configured)throw new Error(d.message||'Gemini API key is not configured on the server.');showToast('Gemini backend is configured ✓')}catch(e){showToast(e.message||'Could not reach backend. Open the deployed site URL and check Render logs.',true)}}
+function shareReport(){const r=currentReport;if(!r)return;const l=location.href.split('#')[0]+'#r='+btoa(unescape(encodeURIComponent(JSON.stringify(r))));(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>showToast('Share link copied')).catch(()=>prompt('Copy this link',l))}
+function importShared(){const m=location.hash.match(/^#r=(.+)/);if(!m)return;try{const r=JSON.parse(decodeURIComponent(escape(atob(m[1]))));if(r&&r.form&&Array.isArray(r.products)){r.id='r'+Date.now().toString(36);history.unshift(r);saveHistory();openHistory(r.id);showToast('Shared report added to your history')}}catch(e){}window.history.replaceState(null,'',location.pathname+location.search)}
+
+// ========== INIT ==========
+(function init(){
+ setTheme(document.documentElement.dataset.theme||'dark');initLocations();
+ const e=store.get(SESS,null);if(e&&store.get(UK,{})[e])startSession(e);else showAuth('login');
+})();
+</script>
+</body>
+</html>
